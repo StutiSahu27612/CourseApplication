@@ -36,6 +36,13 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<distributionManagement>
+    <repository>
+        <id>repo-id</id>
+        <url>https://github.com/StutiSahu27612/CourseApplication/</url>
+    </repository>
+</distributionManagement>
+
 	</dependencies>
 
 	<build>
