@@ -92,3 +92,15 @@ jobs:
             });
         env:
            total_coverage: ${{ steps.calculate_coverage.outputs.total_coverage }}
+      - name: Set GitHub Check
+        uses: actions/create-check@v2
+        with:
+          name: Code Coverage
+          conclusion: ${{ steps.calculate_coverage.outputs.total_coverage >= 10 ? 'success' : 'failure' }}
+          status: completed
+          output: |
+            {
+              "title": "Code Coverage",
+              "summary": "Total Code Coverage: ${{ steps.calculate_coverage.outputs.total_coverage }}%",
+              "annotations": []
+            }
