@@ -1,3 +1,5 @@
+
+
 name: CI
 
 on:
@@ -8,7 +10,7 @@ on:
     branches:
       - master
 
-jobs: 
+jobs:
   build:
     runs-on: ubuntu-latest
 
@@ -60,8 +62,19 @@ jobs:
             const coverage = process.env.total_coverage;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const prNumber = github.event.number;
+            
+            // Fetch pull request number
+            const prResponse = await github.graphql(`
+              query {
+                repository(owner: "${owner}", name: "${repo}") {
+                  pullRequest(number: ${{ github.event.number }}) {
+                    number
+                  }
+                }
+              }
+            `);
 
+            const prNumber = prResponse.repository.pullRequest.number;
 
             github.checks.create({
               owner,
@@ -75,8 +88,7 @@ jobs:
                 summary: `Total Code Coverage: ${coverage}%`,
               },
             });
-        env:
+          env:
             total_coverage: ${{ steps.calculate_coverage.outputs.total_coverage }}
 
       # Add any additional steps you may need here, e.g., SonarQube analysis
-
