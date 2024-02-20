@@ -96,7 +96,7 @@ jobs:
         uses: actions/create-check@v2
         with:
           name: Code Coverage
-          conclusion: ${{ steps.calculate_coverage.outputs.total_coverage >= 10 ? 'success' : 'failure' }}
+          conclusion: ${{ steps.calculate_coverage.outputs.total_coverage >= 10 ? 'success' :'failure' }}
           status: completed
           output: |
             {
