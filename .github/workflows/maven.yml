@@ -3,10 +3,10 @@ name: CI
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
@@ -54,53 +54,18 @@ jobs:
           echo "Total Code Coverage: $total_coverage%"
         shell: bash
 
-      - name: Set GitHub Check
-        id: code-coverage
-        uses: actions/github-script@v5
-        with:
-          script: |
-            const coverage = process.env.total_coverage;
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
+      - name: Set Conclusion
+        id: set_conclusion
+        run: echo "::set-output name=conclusion::${{ steps.calculate_coverage.outputs.total_coverage >= 10 && 'success' || 'failure' }}"
 
-            // Fetch pull request number
-            const prResponse = await github.graphql(`
-              query {
-                repository(owner: "${owner}", name: "${repo}") {
-                  pullRequests(headRefName: "master", first: 1, states: OPEN) {
-                    nodes {
-                      number
-                    }
-                  }
-                }
-              }
-            `);
-
-            const prNumber = prResponse.repository.pullRequests.nodes[0].number;
-
-            github.checks.create({
-              owner,
-              repo,
-              name: 'Code Coverage',
-              head_sha: github.context.sha,
-              status: 'completed',
-              conclusion: coverage >= 10 ? 'success' : 'failure',
-              output: {
-                title: 'Code Coverage',
-                summary: `Total Code Coverage: ${coverage}%`,
-              },
-            });
-        env:
-           total_coverage: ${{ steps.calculate_coverage.outputs.total_coverage }}
       - name: Set GitHub Check
         uses: actions/create-check@v2
         with:
           name: Code Coverage
-          conclusion: ${{ steps.calculate_coverage.outputs.total_coverage >= 10 ? 'success' : 'failure' }}
+          conclusion: ${{ steps.set_conclusion.outputs.conclusion }}
           status: completed
           output: |
             {
               "title": "Code Coverage",
-              "summary": "Total Code Coverage: ${{ steps.calculate_coverage.outputs.total_coverage }}%",
-              "annotations": []
+              "summary": "Total Code Coverage: ${{ steps.calculate_coverage.outputs.total_coverage }}%"
             }
