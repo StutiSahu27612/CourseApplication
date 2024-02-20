@@ -74,11 +74,7 @@ jobs:
                   }
                 }
               }
-            `, {
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            });
+            `);
 
             const prNumber = prResponse?.repository?.pullRequests?.nodes[0]?.number;
 
@@ -95,8 +91,34 @@ jobs:
                   summary: `Total Code Coverage: ${coverage}%`,
                 },
               });
+
+              // Additional step for adding coverage to PR
+              const jacocoResult = await github.actions.invokeWorkflow({
+                owner,
+                repo,
+                workflow_id: '.github/workflows/add-coverage-to-pr.yml', // Provide the correct workflow ID or file name
+                ref: `refs/pull/${prNumber}/merge`,
+                inputs: {
+                  token: process.env.GITHUB_TOKEN,
+                },
+              });
             } else {
               console.error('Unable to determine pull request number from GraphQL response.');
             }
         env:
           total_coverage: ${{ steps.calculate_coverage.outputs.total_coverage }}
+          
+  add-coverage-to-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add coverage to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.6.1
+        with:
+          paths: |
+            ${{ github.workspace }}/**/build/reports/jacoco/prodNormalDebugCoverage/prodNormalDebugCoverage.xml,
+            ${{ github.workspace }}/**/build/reports/jacoco/**/debugCoverage.xml
+          token: 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
+
+          min-coverage-overall: 10
+          min-coverage-changed-files: 60
