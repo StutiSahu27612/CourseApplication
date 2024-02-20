@@ -86,7 +86,7 @@ jobs:
                 summary: `Total Code Coverage: ${coverage}%`,
               },
             });
-          env:
+        env:
             total_coverage: ${{ steps.calculate_coverage.outputs.total_coverage }}
 
       # Add any additional steps you may need here, e.g., SonarQube analysis
