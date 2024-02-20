@@ -67,7 +67,7 @@ jobs:
             const prResponse = await github.graphql(`
               query {
                 repository(owner: "${owner}", name: "${repo}") {
-                  pullRequests(headRefName: "main", first: 1, states: OPEN) {
+                  pullRequests(headRefName: "master", first: 1, states: OPEN) {
                     nodes {
                       number
                     }
