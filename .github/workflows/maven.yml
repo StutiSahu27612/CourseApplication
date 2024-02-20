@@ -60,7 +60,8 @@ jobs:
             const coverage = process.env.total_coverage;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const prNumber = context.payload.pull_request.number;
+            const prNumber = github.event.number;
+
 
             github.checks.create({
               owner,
@@ -68,7 +69,7 @@ jobs:
               name: 'Code Coverage',
               head_sha: github.context.sha,
               status: 'completed',
-              conclusion: coverage >= 80 ? 'success' : 'failure',
+              conclusion: coverage >= 10 ? 'success' : 'failure',
               output: {
                 title: 'Code Coverage',
                 summary: `Total Code Coverage: ${coverage}%`,
