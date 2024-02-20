@@ -1,26 +1,51 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up JDK
-      uses: actions/setup-java@v2
-      with:
-        distribution: 'adopt' 
-        java-version: '17'
-        
-    - name: Make Maven Wrapper Executable
-      run: chmod +x mvnw
-    - name: Build and run tests
-      run: |
-        ./mvnw clean install
-    - name: Code Coverage
-      run: |
-        ./mvnw jacoco:prepare-agent test jacoco:report
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'  # Specify the Java version you need
+
+      - name: Make Maven Wrapper Executable
+        run: chmod +x mvnw
+
+      - name: Build and run tests
+        run: |
+          ./mvnw clean install
+          ./mvnw jacoco:prepare-agent test jacoco:report
+
+      - name: Archive JaCoCo report
+        uses: actions/upload-artifact@v2
+        with:
+          name: jacoco-report
+          path: target/site/jacoco
+
+  analyze:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download JaCoCo report
+        uses: actions/download-artifact@v2
+        with:
+          name: jacoco-report
+          path: jacoco-report
+
+      # Add any additional steps you may need here, e.g., SonarQube analysis
+
