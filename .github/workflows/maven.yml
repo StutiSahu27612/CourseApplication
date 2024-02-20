@@ -47,5 +47,35 @@ jobs:
           name: jacoco-report
           path: jacoco-report
 
+      - name: Calculate Total Code Coverage
+        run: |
+          total_coverage=$(grep -Po "(?<=<td class=\"ctr2\">)[0-9]+(?=%<\/td>)" jacoco-report/index.html | awk '{s+=$1} END {print s/NR}')
+          echo "Total Code Coverage: $total_coverage%"
+
+      - name: Set GitHub Check
+        id: code-coverage
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const coverage = process.env.total_coverage;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = context.payload.pull_request.number;
+
+            github.checks.create({
+              owner,
+              repo,
+              name: 'Code Coverage',
+              head_sha: github.context.sha,
+              status: 'completed',
+              conclusion: coverage >= 80 ? 'success' : 'failure',
+              output: {
+                title: 'Code Coverage',
+                summary: `Total Code Coverage: ${coverage}%`,
+              },
+            });
+        env:
+            total_coverage: ${{ steps.calculate_coverage.outputs.total_coverage }}
+
       # Add any additional steps you may need here, e.g., SonarQube analysis
 
