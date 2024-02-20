@@ -3,12 +3,12 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
 
-jobs:
+jobs: 
   build:
     runs-on: ubuntu-latest
 
@@ -20,7 +20,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: '11'  # Specify the Java version you need
+          java-version: '17'  # Specify the Java version you need
 
       - name: Make Maven Wrapper Executable
         run: chmod +x mvnw
