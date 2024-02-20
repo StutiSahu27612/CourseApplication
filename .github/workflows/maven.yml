@@ -1,3 +1,4 @@
+
 name: CI
 
 on:
@@ -73,7 +74,11 @@ jobs:
                   }
                 }
               }
-            `);
+            `, {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
 
             const prNumber = prResponse?.repository?.pullRequests?.nodes[0]?.number;
 
