@@ -47,5 +47,10 @@ jobs:
           name: jacoco-report
           path: jacoco-report
 
+      - name: Display Code Coverage on PR
+        run: |
+          total_coverage=$(grep -Po "(?<=<td class=\"ctr2\">)[0-9]+(?=%<\/td>)" jacoco-report/index.html | awk '{s+=$1} END {print s/NR}')
+          echo "Total Code Coverage: $total_coverage%"
+
       # Add any additional steps you may need here, e.g., SonarQube analysis
 
