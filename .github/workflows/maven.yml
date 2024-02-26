@@ -1,17 +1,12 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
 
+   
 name: Java CI with Maven
 
 on:
   push:
     branches: [ "master" ]
-  pull_request:
+  pull_request_target:
     branches: [ "master" ]
 
 jobs:
@@ -27,7 +22,23 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
-    - name: Build with Maven
-      run: mvn -B package --DskipTests pom.xml
+    - name: Build with Maven and Generate JaCoCo Report
+      run: mvn -B package -DskipTests jacoco:report
+    - name: Extract Coverage Percentage
+      id: coverage
+      run: |
+        COVERAGE=$(sed -n 's/.*<span class="ctr[^>]*>\([^<]*\)<\/span>%.*$/\1/p' target/site/jacoco/index.html)
+        echo "::set-output name=coverage::$COVERAGE"
 
-   
+  comment:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Comment on PR with Coverage
+      run: |
+        echo "Code coverage: ${{ needs.build.outputs.coverage }}%"
+        TOKEN=${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
+        URL="https://api.github.com/repos/${{ github.repository }}/issues/${PR_NUMBER}/comments"
+        PAYLOAD="{\"body\":\"Code coverage: ${{ needs.build.outputs.coverage }}%\"}"
+        curl -sS -H "Authorization: Bearer $TOKEN" -X POST -d "$PAYLOAD" "$URL"
