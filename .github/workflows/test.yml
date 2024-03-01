@@ -6,7 +6,7 @@ on:
       - opened
       - synchronize
 
-jobs: 
+jobs:
   pr-decoration:
     runs-on: ubuntu-latest
 
@@ -49,9 +49,9 @@ jobs:
           script: |
             const coverage = "${{ steps.extract-coverage.outputs.coverage }}";
             const prNumber = context.payload.pull_request.number;
-            const repoToken = process.env.GITHUB_TOKEN;
 
-            const octokit = new github.getOctokit(repoToken);
+            // Use context.octokit directly
+            const octokit = context.octokit;
 
             octokit.issues.createComment({
               owner: context.repo.owner,
