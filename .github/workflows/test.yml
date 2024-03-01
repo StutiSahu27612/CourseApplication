@@ -6,7 +6,7 @@ on:
       - opened
       - synchronize
 
-jobs:
+jobs: 
   pr-decoration:
     runs-on: ubuntu-latest
 
