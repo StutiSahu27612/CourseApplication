@@ -24,7 +24,7 @@ jobs:
     - name: Extract Coverage Percentage
       id: coverage
       run: |
-        COVERAGE=$(sed -n 's/.*<span class="ctr[^>]*>\([^<]*\)<\/span>%.*$/\1/p' target/site/jacoco/index.html)
+        COVERAGE=$(sed -n 's/.*<span class="ctr[^>]*>\([^<]*\)<\/span>%.*$/\1/p' target/site/jacoco/jacoco.csv
         echo "::set-output name=coverage::$COVERAGE"
 
   comment:
