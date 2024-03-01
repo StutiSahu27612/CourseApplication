@@ -49,7 +49,7 @@ jobs:
           coverage="${{ steps.extract-coverage.outputs.coverage }}"
           prNumber="${{ github.event.number }}"
           
-          octokit=$(echo "$GITHUB_TOKEN" | base64 -d -)
+          octokit=$GITHUB_TOKEN
           repo="${{ github.repository_owner }}/${{ github.repository }}"
           
           curl -sSL \
