@@ -44,20 +44,18 @@ jobs:
 
       - name: Post PR Comment
         if: always()
-        uses: actions/github-script@v4
-        with:
-          script: |
-            const coverage = "${{ steps.extract-coverage.outputs.coverage }}";
-            const prNumber = context.payload.pull_request.number;
+        run: |
+          const coverage = "${{ steps.extract-coverage.outputs.coverage }}";
+          const prNumber = github.context.payload.pull_request.number;
 
-            // Use context.octokit directly
-            const octokit = context.octokit;
+          // Use github.context directly
+          const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
 
-            octokit.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: `Code coverage: ${coverage}%`,
-            });
+          octokit.issues.createComment({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            issue_number: prNumber,
+            body: `Code coverage: ${coverage}%`,
+          });
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
