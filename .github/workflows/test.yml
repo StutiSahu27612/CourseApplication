@@ -1,3 +1,4 @@
+
 name: PR Decoration with JaCoCo Coverage
 
 on:
@@ -45,17 +46,17 @@ jobs:
       - name: Post PR Comment
         if: always()
         run: |
-          const coverage = "${{ steps.extract-coverage.outputs.coverage }}";
-          const prNumber = github.context.payload.pull_request.number;
-
-          // Use github.context directly
-          const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
-
-          octokit.issues.createComment({
-            owner: github.context.repo.owner,
-            repo: github.context.repo.repo,
-            issue_number: prNumber,
-            body: `Code coverage: ${coverage}%`,
-          });
+          coverage="${{ steps.extract-coverage.outputs.coverage }}"
+          prNumber="${{ github.event.number }}"
+          
+          octokit=$(echo "$GITHUB_TOKEN" | base64 -d -)
+          repo="${{ github.repository_owner }}/${{ github.repository }}"
+          
+          curl -sSL \
+            -H "Authorization: token $octokit" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"body\": \"Code coverage: $coverage%\"}" \
+            "https://api.github.com/repos/$repo/issues/$prNumber/comments"
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
