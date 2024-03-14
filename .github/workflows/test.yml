@@ -1,9 +1,10 @@
+
 name: JaCoCo Code Coverage
 
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   jacoco:
@@ -18,7 +19,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: '17'
+          java-version: '11'
 
       - name: Build and test with JaCoCo
         run: mvn clean verify
@@ -40,9 +41,8 @@ jobs:
             const repo = context.repo.repo;
             const body = `Code coverage: ${coverage}%`;
             github.issues.update({
-              owner,
-              repo,
+              owner: owner,
+              repo: repo,
               issue_number: prNumber,
-              body
+              body: body
             });
-
