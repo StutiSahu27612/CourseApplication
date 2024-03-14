@@ -1,48 +1,61 @@
-name: JaCoCo Code Coverage
+name: PR Decoration with JaCoCo Coverage
 
 on:
   pull_request:
-    branches:
-      - master
+    types:
+      - opened
+      - synchronize
 
 jobs:
-  jacoco:
-    name: JaCoCo Coverage Analysis
+  pr-decoration:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Set up JDK 11
+      - name: Set up JDK
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
           java-version: '17'
 
-      - name: Build and test with JaCoCo
-        run: mvn clean verify
+      - name: Ensure execute permissions for mvnw
+        run: chmod +x mvnw
 
-      - name: Extract code coverage percentage
-        id: coverage
+      - name: Build and Test with JaCoCo
         run: |
-          COVERAGE=$(sed -n 's|.*<span class="ctr2">\([0-9]*\)%.*|\1|p' target/site/jacoco/index.html)
-          echo "::set-output name=coverage::$COVERAGE"
+          ./mvnw clean verify
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
-      - name: Update PR description
-        uses: actions/github-script@v4
+      - name: Upload Report
+        uses: actions/upload-artifact@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const coverage = ${{ steps.coverage.outputs.coverage }};
-            const prNumber = context.payload.pull_request.number;
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const body = `Code coverage: ${coverage}%`;
-            github.issues.update({
-              owner,
-              repo,
-              issue_number: prNumber,
-              body
-            });
+          name: jacoco-report
+          path: ${{ github.workspace }}/target/site/jacoco/jacoco.xml
+
+      - name: Extract Coverage Percentage
+        id: extract-coverage
+        run: |
+          COVERAGE=$(sed -n 's/.*<span class="ctr[^>]*>\([^<]*\)<\/span>%.*$/\1/p' target/site/jacoco/index.html)
+          echo "Coverage: $COVERAGE%"
+          echo "::set-output name=coverage::$COVERAGE"
+      - name: Post PR Comment
+        if: always()
+        run: |
+          coverage="${{ steps.extract-coverage.outputs.coverage }}"
+          prNumber="${{ github.event.number }}"
+          
+          octokit=$GITHUB_TOKEN
+          repo="${{ github.repository_owner }}/${{ github.repository }}"
+          
+          curl -sSL \
+            -H "Authorization: token $octokit" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"body\": \"Code coverage: $coverage%\"}" \
+            "https://api.github.com/repos/$repo/issues/$prNumber/comments"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
 
