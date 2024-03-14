@@ -38,11 +38,19 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const body = `Code coverage: ${coverage}%`;
-            github.issues.update({
+            const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+            const pr = await octokit.pulls.get({
               owner,
               repo,
-              issue_number: prNumber,
-              body
+              pull_number: prNumber
+            });
+            const prTitle = pr.data.title;
+            const prBody = pr.data.body;
+            const newBody = `Code coverage: ${coverage}%\n\n${prBody}`;
+            await octokit.pulls.update({
+              owner,
+              repo,
+              pull_number: prNumber,
+              body: newBody
             });
 
