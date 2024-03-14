@@ -5,7 +5,7 @@ on:
     branches:
       - master
 
-jobs:
+jobs: 
   jacoco:
     name: JaCoCo Coverage Analysis
     runs-on: ubuntu-latest
