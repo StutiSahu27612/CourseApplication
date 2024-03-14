@@ -33,16 +33,4 @@ jobs:
         uses: actions/github-script@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const coverage = ${{ steps.coverage.outputs.coverage }};
-            const prNumber = context.payload.pull_request.number;
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const body = `Code coverage: ${coverage}%`;
-            github.issues.update({
-              owner,
-              repo,
-              issue_number: prNumber,
-              body
-            });
-
+          script: console.log('Hello from GitHub Script action');
