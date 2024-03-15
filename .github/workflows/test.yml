@@ -42,16 +42,30 @@ jobs:
         script: |
           try {
             const coverage = '${{ steps.coverage.outputs.coverage }}';
-            const owner = context.payload.repository.owner.login;
-            const repo = context.payload.repository.name;
-            const prNumber = context.payload.pull_request.number;
-            const comment = `Code Coverage: ${coverage}%`;
-            github.issues.createComment({
-              owner,
-              repo,
-              issue_number: prNumber,
-              body: comment
-            });
+            console.log('Coverage:', coverage);
+
+            const owner = context.payload.repository?.owner?.login;
+            console.log('Owner:', owner);
+
+            const repo = context.payload.repository?.name;
+            console.log('Repository:', repo);
+
+            const prNumber = context.payload.pull_request?.number;
+            console.log('Pull Request Number:', prNumber);
+
+            if (coverage && owner && repo && prNumber) {
+              const comment = `Code Coverage: ${coverage}%`;
+              console.log('Attempting to post comment...');
+              await github.issues.createComment({
+                owner,
+                repo,
+                issue_number: prNumber,
+                body: comment
+              });
+              console.log('Comment posted successfully.');
+            } else {
+              console.error('One or more necessary information is missing. Unable to create comment.');
+            }
           } catch (error) {
             console.error('Error occurred while commenting on pull request:', error.message);
           }
