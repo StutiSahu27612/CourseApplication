@@ -34,24 +34,42 @@ jobs:
         COVERAGE=$(sed -n 's/.*Overall coverage rate \([^%]*\)\%.*/\1/p' target/site/jacoco/index.html)
         echo "::set-output name=coverage::$COVERAGE"
 
-    - name: Comment Code Coverage on Pull Request
+    - name: Comment Code Coverage and Owner Name on Pull Request
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v5
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          try {
-            const coverage = '${{ steps.coverage.outputs.coverage }}';
-            const owner = context.payload.repository.owner.login;
-            const repo = context.payload.repository.name;
-            const prNumber = context.payload.pull_request.number;
-            const comment = `Code Coverage: ${coverage}%`;
-            github.issues.createComment({
-              owner,
-              repo,
-              issue_number: prNumber,
-              body: comment
-            });
-          } catch (error) {
-            console.error('Error occurred while commenting on pull request:', error.message);
+          async function run() {
+            try {
+              const owner = context.payload.repository?.owner?.login;
+              console.log('Owner:', owner);
+
+              const coverage = '${{ steps.coverage.outputs.coverage }}';
+              console.log('Coverage:', coverage);
+
+              const repo = context.payload.repository?.name;
+              console.log('Repository:', repo);
+
+              const prNumber = context.payload.pull_request?.number;
+              console.log('Pull Request Number:', prNumber);
+
+              if (owner && repo && prNumber && coverage) {
+                const comment = `Owner: ${owner}\nCode Coverage: ${coverage}%`;
+                console.log('Attempting to post comment...');
+                await github.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: prNumber,
+                  body: comment
+                });
+                console.log('Comment posted successfully.');
+              } else {
+                console.error('One or more necessary information is missing. Unable to create comment.');
+              }
+            } catch (error) {
+              console.error('Error occurred while commenting on pull request:', error.message);
+            }
           }
+
+          run();
