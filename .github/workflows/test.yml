@@ -34,6 +34,10 @@ jobs:
         COVERAGE=$(sed -n 's/.*Overall coverage rate \([^%]*\)\%.*/\1/p' target/site/jacoco/index.html)
         echo "::set-output name=coverage::$COVERAGE"
 
+    - name: Get owner name
+      id: get_owner
+      run: echo "::set-env name=owner::$(jq -r '.repository.owner.login' $GITHUB_EVENT_PATH)"
+
     - name: Comment Code Coverage on Pull Request
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v5
@@ -42,16 +46,36 @@ jobs:
         script: |
           try {
             const coverage = '${{ steps.coverage.outputs.coverage }}';
-            const owner = context.payload.repository.owner.login;
-            const repo = context.payload.repository.name;
-            const prNumber = context.payload.pull_request.number;
-            const comment = `Code Coverage: ${coverage}%`;
-            github.issues.createComment({
-              owner,
-              repo,
-              issue_number: prNumber,
-              body: comment
-            });
+            console.log('Coverage:', coverage);
+
+            const owner = '${{ env.owner }}';
+            console.log('Owner:', owner);
+
+            const repo = context.payload.repository?.name;
+            console.log('Repository:', repo);
+
+            const prNumber = context.payload.pull_request?.number;
+            console.log('Pull Request Number:', prNumber);
+
+            if (owner && repo && prNumber) {
+              const comment = `Owner: ${owner}\nCode Coverage: ${coverage}%`;
+
+              // Attempting to use github REST API to create a comment
+              const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/issues/${prNumber}/comments`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ body: comment })
+              });
+
+              if (!response.ok) {
+                console.error('Failed to post comment:', response.statusText);
+              }
+            } else {
+              console.error('One or more necessary information is missing. Unable to create comment.');
+            }
           } catch (error) {
             console.error('Error occurred while commenting on pull request:', error.message);
           }
