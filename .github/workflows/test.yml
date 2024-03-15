@@ -34,24 +34,25 @@ jobs:
         COVERAGE=$(sed -n 's/.*Overall coverage rate \([^%]*\)\%.*/\1/p' target/site/jacoco/index.html)
         echo "::set-output name=coverage::$COVERAGE"
 
+    - name: Get owner name
+      id: get_owner
+      run: echo "OWNER=$(jq -r '.repository.owner.login' $GITHUB_EVENT_PATH)" >> $GITHUB_ENV
+
     - name: Comment Code Coverage on Pull Request
       if: github.event_name == 'pull_request'
-      uses: actions/github-script@v5
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          try {
-            const coverage = '${{ steps.coverage.outputs.coverage }}';
-            const owner = context.payload.repository.owner.login;
-            const repo = context.payload.repository.name;
-            const prNumber = context.payload.pull_request.number;
-            const comment = `Code Coverage: ${coverage}%`;
-            github.issues.createComment({
-              owner,
-              repo,
-              issue_number: prNumber,
-              body: comment
-            });
-          } catch (error) {
-            console.error('Error occurred while commenting on pull request:', error.message);
-          }
+      run: |
+        coverage="${{ steps.coverage.outputs.coverage }}"
+        owner="${{ env.OWNER }}"
+        repo="${{ github.repository }}"
+        prNumber="${{ github.event.pull_request.number }}"
+        if [ -n "$coverage" ] && [ -n "$owner" ] && [ -n "$repo" ] && [ -n "$prNumber" ]; then
+          comment="Owner: $owner\nCode Coverage: $coverage%"
+          response=$(curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d "{\"body\":\"$comment\"}" "https://api.github.com/repos/$repo/issues/$prNumber/comments")
+          if [ $? -eq 0 ]; then
+            echo "Comment posted successfully."
+          else
+            echo "Failed to post comment: $response"
+          fi
+        else
+          echo "One or more necessary information is missing. Unable to create comment."
+        fi
